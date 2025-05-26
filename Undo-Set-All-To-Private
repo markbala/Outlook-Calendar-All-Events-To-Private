@@ -1,0 +1,41 @@
+Sub ResetAllCalendarEventsToNormal()
+    Dim olNamespace As Outlook.namespace
+    Dim olCalendarFolder As Outlook.Folder
+    Dim olAppointment As Outlook.AppointmentItem
+    Dim olItems As Outlook.Items
+    Dim filteredItems As Outlook.Items
+    Dim item As Object
+    Dim startDate As Date
+    Dim endDate As Date
+ 
+    ' Get the Outlook Namespace
+    Set olNamespace = Application.GetNamespace("MAPI")
+ 
+    ' Get the Calendar folder
+    Set olCalendarFolder = olNamespace.GetDefaultFolder(olFolderCalendar)
+ 
+    ' Get all calendar items (appointments)
+    Set olItems = olCalendarFolder.Items
+    olItems.Sort "[Start]"
+ 
+    ' Define the date range to search for events (you can modify the range as needed)
+    startDate = Date - 200  ' Start [200] days ago
+    endDate = Date + 200   ' End [200] days in the future
+ 
+    ' Restrict the items to the specified date range
+    Set filteredItems = olItems.Restrict("[Start] >= '" & startDate & "' AND [Start] <= '" & endDate & "'")
+ 
+    ' Loop through all filtered calendar events
+    On Error Resume Next  ' Skip any errors (if items are locked or inaccessible)
+    For Each item In filteredItems
+        If TypeName(item) = "AppointmentItem" Then
+            Set olAppointment = item
+            ' Reset the appointment to "Normal" sensitivity (not private)
+            olAppointment.Sensitivity = olNormal
+            olAppointment.Save
+        End If
+    Next item
+    On Error GoTo 0  ' Reset error handling to default
+ 
+    MsgBox "All calendar events have been reset to Normal (not private)."
+End Sub
